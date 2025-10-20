@@ -1,0 +1,6 @@
+- autoinstall script must not rely on /usr/bin/env; the minimal NixOS installer only provides interpreters via store paths. Use `pkgs.writeShellScript` (or substitute paths) so the shebang points at `${pkgs.runtimeShell}`.
+- When referencing external utils (sgdisk/mkfs/btrfs), bake their full store paths into the script; keeping them in `environment.systemPackages` is optional for debug only.
+- Default `admin` password set to `default1234567` for first boot; remind user to rotate.
+- ISO copies repo to `/etc/nixos`; repo initialised with origin remote but no push attempted.
+- Kernel params `autoinstall.disk=` and `autoinstall.disable=1` supported.
+- Remember to keep docs in sync when automation defaults change.
