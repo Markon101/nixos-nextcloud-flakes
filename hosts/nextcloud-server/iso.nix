@@ -4,14 +4,20 @@ let
     let
       scriptTemplate = builtins.readFile ./autoinstall.sh;
       scriptContents = lib.replaceStrings
-        [ "@SGDISK@" "@MKFS_FAT@" "@MKFS_BTRFS@" "@BTRFS@" "@OPENSSL@" "@MKPASSWD@" ]
+        [ "@PATH@" "@SGDISK@" "@MKFS_FAT@" "@MKFS_BTRFS@" "@BTRFS@" "@OPENSSL@" ]
         [
+          (lib.makeBinPath [
+            pkgs.coreutils
+            pkgs.util-linux
+            pkgs.git
+            pkgs.nixos-install-tools
+            pkgs.nix
+          ])
           "${pkgs.gptfdisk}/bin/sgdisk"
           "${pkgs.dosfstools}/bin/mkfs.fat"
           "${pkgs.btrfs-progs}/bin/mkfs.btrfs"
           "${pkgs.btrfs-progs}/bin/btrfs"
           "${pkgs.openssl}/bin/openssl"
-          "${pkgs.whois}/bin/mkpasswd"
         ]
         scriptTemplate;
     in
@@ -24,6 +30,11 @@ in
   ];
 
   networking.hostName = "nextcloud-installer";
+
+  boot.kernelParams = [
+    "console=tty0"
+    "console=ttyS0,115200n8"
+  ];
 
   users.users.root = {
     password = lib.mkForce "nixos";

@@ -1,4 +1,6 @@
-set -euo pipefail
+set -euxo pipefail
+
+export PATH="@PATH@:$PATH"
 
 exec > >(tee -a /root/autoinstall.log) 2>&1
 
@@ -7,7 +9,6 @@ MKFS_FAT="@MKFS_FAT@"
 MKFS_BTRFS="@MKFS_BTRFS@"
 BTRFS="@BTRFS@"
 OPENSSL="@OPENSSL@"
-MKPASSWD="@MKPASSWD@"
 
 if grep -q 'autoinstall.disable=1' /proc/cmdline; then
   echo "Autoinstall disabled via kernel cmdline."
@@ -74,7 +75,10 @@ mkdir -p /mnt/etc/nixos
 cp -a /etc/nixos/. /mnt/etc/nixos/
 chmod -R u+w /mnt/etc/nixos
 
-nixos-generate-config --root /mnt --show-hardware-config > /mnt/etc/nixos/hosts/nextcloud-server/hardware-configuration.nix
+TMP_HW="$(mktemp)"
+nixos-generate-config --root /mnt --show-hardware-config > "$TMP_HW"
+install -Dm644 "$TMP_HW" /mnt/etc/nixos/hosts/nextcloud-server/hardware-configuration.nix
+rm -f "$TMP_HW"
 
 install -d -m 700 -o root -g root /mnt/var/lib/nextcloud/secrets
 
@@ -84,7 +88,7 @@ ADMIN_PASS="default1234567"
 printf '%s\n' "$NEXTCLOUD_PASS" > /mnt/var/lib/nextcloud/secrets/admin-password
 chmod 600 /mnt/var/lib/nextcloud/secrets/admin-password
 
-HASHED="$($MKPASSWD -m sha-512 "$ADMIN_PASS")"
+HASHED="$($OPENSSL passwd -6 "$ADMIN_PASS")"
 printf '%s\n' "$HASHED" > /mnt/var/lib/nextcloud/secrets/admin-password-hash
 chmod 600 /mnt/var/lib/nextcloud/secrets/admin-password-hash
 
